@@ -27,9 +27,9 @@ try:
     import base64
     import os
     import sys
-    from ecdsa.ecdsa import generator_secp256k1
+    from ecdsa.ecdsa import generator_256
     from ecdsa.util import sigencode_der
-    from ecdsa.curves import SECP256k1
+    from ecdsa.curves import curve_256
     DIGIBOX = True
 except ImportError as e:
     DIGIBOX = False
@@ -634,7 +634,7 @@ class DigitalBitbox_KeyStore(Hardware_KeyStore):
                         recid = int(signed['recid'], 16)
                         s = binascii.unhexlify(signed['sig'])
                         h = inputhasharray[i]
-                        pk = MyVerifyingKey.from_signature(s, recid, h, curve = SECP256k1)
+                        pk = MyVerifyingKey.from_signature(s, recid, h, curve = curve_256)
                         pk = to_hexstr(point_to_ser(pk.pubkey.point, True))
                     elif 'pubkey' in signed:
                         # firmware <= v2.1.1
@@ -643,7 +643,7 @@ class DigitalBitbox_KeyStore(Hardware_KeyStore):
                         continue
                     sig_r = int(signed['sig'][:64], 16)
                     sig_s = int(signed['sig'][64:], 16)
-                    sig = sigencode_der(sig_r, sig_s, generator_secp256k1.order())
+                    sig = sigencode_der(sig_r, sig_s, generator_256.order())
                     sig = to_hexstr(sig) + '01'
                     Transaction.add_signature_to_txin(txin, ii, sig)
                     tx._inputs[i] = txin

@@ -746,10 +746,13 @@ class SocketPipe:
     def get(self):
         while True:
             response, self.message = parse_json(self.message)
+            # print("testing response", response)
+            # print("testing self message", self.message)
             if response is not None:
                 return response
             try:
                 data = self.socket.recv(1024)
+                # print("testing socket data: ", data)
             except socket.timeout:
                 raise timeout
             except ssl.SSLError:
