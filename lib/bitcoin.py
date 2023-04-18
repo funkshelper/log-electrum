@@ -397,6 +397,8 @@ def address_to_script(addr, *, net=None):
     if net is None:
         net = constants.net
     witver, witprog = segwit_addr.decode(net.SEGWIT_HRP, addr)
+    # print("witver: ", witver)
+    # print("witprog: ", witprog)
     if witprog is not None:
         if not (0 <= witver <= 16):
             raise BitcoinException('impossible witness version: {}'.format(witver))
@@ -405,20 +407,27 @@ def address_to_script(addr, *, net=None):
         script += push_script(bh2u(bytes(witprog)))
         return script
     addrtype, hash_160 = b58_address_to_hash160(addr)
+    print("addr type: ", addrtype)
+    print("hash 160: ", hash_160)
     if addrtype == net.ADDRTYPE_P2PKH:
         script = '76a9'                                      # op_dup, op_hash_160
         script += push_script(bh2u(hash_160))
-        script += '88ac'                                     # op_equalverify, op_checksig
+        script += '88ac'
+        print("ADDRTYPE_P2PKH: ", script)                                    # op_equalverify, op_checksig
     elif addrtype == net.ADDRTYPE_P2SH:
         script = 'a9'                                        # op_hash_160
         script += push_script(bh2u(hash_160))
-        script += '87'                                       # op_equal
+        script += '87' 
+        print("ADDRTYPE_P2SH: ", script)                                      # op_equal
     else:
         raise BitcoinException('unknown address type: {}'.format(addrtype))
     return script
 
 def address_to_scripthash(addr):
+    # print("address", addr)
+    # print("address script:", address_to_script(addr))
     script = address_to_script(addr)
+    # print("script to hash: ", script_to_scripthash(script))
     return script_to_scripthash(script)
 
 def script_to_scripthash(script):

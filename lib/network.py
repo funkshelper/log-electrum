@@ -638,6 +638,7 @@ class Network(util.DaemonThread):
         hash2address = {bitcoin.address_to_scripthash(address): address for address in addresses}
         self.h2addr.update(hash2address)
         msgs = [('blockchain.scripthash.subscribe', [x]) for x in hash2address.keys()]
+        print("message: ", msgs)
         self.send(msgs, self.map_scripthash_to_address(callback))
 
     def request_address_history(self, address, callback):

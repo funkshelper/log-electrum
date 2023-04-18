@@ -56,7 +56,7 @@ class Synchronizer(ThreadJob):
 
     def parse_response(self, response):
         if response.get('error'):
-            self.print_error("response error:", response)
+            # self.print_error("response error:", response)
             return None, None
         return response['params'], response['result']
 
@@ -74,6 +74,7 @@ class Synchronizer(ThreadJob):
 
     def subscribe_to_addresses(self, addresses):
         if addresses:
+            # print("addresses: ", addresses)
             self.requested_addrs |= addresses
             self.network.subscribe_to_addresses(addresses, self.on_address_status)
 

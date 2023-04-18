@@ -33,6 +33,7 @@ from .util import (PrintError, InvalidPassword, hfu, WalletFileException,
                    BitcoinException)
 from .mnemonic import Mnemonic, load_wordlist
 from .plugins import run_hook
+from ecdsa.ecdsa import curve_256, generator_256
 
 
 class KeyStore(PrintError):
@@ -381,7 +382,7 @@ class Old_KeyStore(Deterministic_KeyStore):
     @classmethod
     def mpk_from_seed(klass, seed):
         secexp = klass.stretch_key(seed)
-        master_private_key = ecdsa.SigningKey.from_secret_exponent(secexp, curve = SECP256k1)
+        master_private_key = ecdsa.SigningKey.from_secret_exponent(secexp, curve = curve_256)
         master_public_key = master_private_key.get_verifying_key().to_string()
         return bh2u(master_public_key)
 
@@ -399,18 +400,18 @@ class Old_KeyStore(Deterministic_KeyStore):
     @classmethod
     def get_pubkey_from_mpk(self, mpk, for_change, n):
         z = self.get_sequence(mpk, for_change, n)
-        master_public_key = ecdsa.VerifyingKey.from_string(bfh(mpk), curve = SECP256k1)
-        pubkey_point = master_public_key.pubkey.point + z*SECP256k1.generator
-        public_key2 = ecdsa.VerifyingKey.from_public_point(pubkey_point, curve = SECP256k1)
+        master_public_key = ecdsa.VerifyingKey.from_string(bfh(mpk), curve = curve_256)
+        pubkey_point = master_public_key.pubkey.point + z*curve_256.generator
+        public_key2 = ecdsa.VerifyingKey.from_public_point(pubkey_point, curve = curve_256)
         return '04' + bh2u(public_key2.to_string())
 
     def derive_pubkey(self, for_change, n):
         return self.get_pubkey_from_mpk(self.mpk, for_change, n)
 
     def get_private_key_from_stretched_exponent(self, for_change, n, secexp):
-        order = generator_secp256k1.order()
+        order = generator_256.order()
         secexp = (secexp + self.get_sequence(self.mpk, for_change, n)) % order
-        pk = number_to_string(secexp, generator_secp256k1.order())
+        pk = number_to_string(secexp, generator_256.order())
         return pk
 
     def get_private_key(self, sequence, password):
@@ -423,7 +424,7 @@ class Old_KeyStore(Deterministic_KeyStore):
 
     def check_seed(self, seed):
         secexp = self.stretch_key(seed)
-        master_private_key = ecdsa.SigningKey.from_secret_exponent( secexp, curve = SECP256k1 )
+        master_private_key = ecdsa.SigningKey.from_secret_exponent( secexp, curve = curve_256 )
         master_public_key = master_private_key.get_verifying_key().to_string()
         if master_public_key != bfh(self.mpk):
             print_error('invalid password (mpk)', self.mpk, bh2u(master_public_key))

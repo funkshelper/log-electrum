@@ -654,12 +654,12 @@ class Transaction:
                     continue
                 pre_hash = Hash(bfh(self.serialize_preimage(i)))
                 # der to string
-                order = ecdsa.ecdsa.generator_secp256k1.order()
+                order = ecdsa.ecdsa.generator_256.order()
                 r, s = ecdsa.util.sigdecode_der(bfh(sig[:-2]), order)
                 sig_string = ecdsa.util.sigencode_string(r, s, order)
                 compressed = True
                 for recid in range(4):
-                    public_key = MyVerifyingKey.from_signature(sig_string, recid, pre_hash, curve = SECP256k1)
+                    public_key = MyVerifyingKey.from_signature(sig_string, recid, pre_hash, curve = curve_256)
                     pubkey = bh2u(point_to_ser(public_key.pubkey.point, compressed))
                     if pubkey in pubkeys:
                         public_key.verify_digest(sig_string, pre_hash, sigdecode = ecdsa.util.sigdecode_string)
@@ -1081,7 +1081,7 @@ class Transaction:
         pre_hash = Hash(bfh(self.serialize_preimage(txin_index)))
         pkey = regenerate_key(privkey_bytes)
         secexp = pkey.secret
-        private_key = bitcoin.MySigningKey.from_secret_exponent(secexp, curve=SECP256k1)
+        private_key = bitcoin.MySigningKey.from_secret_exponent(secexp, curve=curve_256)
         public_key = private_key.get_verifying_key()
         sig = private_key.sign_digest_deterministic(pre_hash, hashfunc=hashlib.sha256, sigencode=ecdsa.util.sigencode_der)
         if not public_key.verify_digest(sig, pre_hash, sigdecode=ecdsa.util.sigdecode_der):
