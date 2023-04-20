@@ -638,7 +638,7 @@ class Network(util.DaemonThread):
         hash2address = {bitcoin.address_to_scripthash(address): address for address in addresses}
         self.h2addr.update(hash2address)
         msgs = [('blockchain.scripthash.subscribe', [x]) for x in hash2address.keys()]
-        print("message: ", msgs)
+        # print("message: ", msgs)
         self.send(msgs, self.map_scripthash_to_address(callback))
 
     def request_address_history(self, address, callback):
@@ -965,8 +965,12 @@ class Network(util.DaemonThread):
 
     def init_headers_file(self):
         b = self.blockchains[0]
+        print("blockchains: ", b)
         filename = b.path()
+        print("filename: ", filename)
         length = 80 * len(constants.net.CHECKPOINTS) * 2016
+        print("length: ", length)
+        print("filename size: ", os.path.getsize(filename))
         if not os.path.exists(filename) or os.path.getsize(filename) < length:
             with open(filename, 'wb') as f:
                 if length>0:

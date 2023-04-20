@@ -1081,7 +1081,7 @@ class Transaction:
         pre_hash = Hash(bfh(self.serialize_preimage(txin_index)))
         pkey = regenerate_key(privkey_bytes)
         secexp = pkey.secret
-        private_key = bitcoin.MySigningKey.from_secret_exponent(secexp, curve=curve_256)
+        private_key = bitcoin.MySigningKey.from_secret_exponent(secexp, curve=NIST256p)
         public_key = private_key.get_verifying_key()
         sig = private_key.sign_digest_deterministic(pre_hash, hashfunc=hashlib.sha256, sigencode=ecdsa.util.sigencode_der)
         if not public_key.verify_digest(sig, pre_hash, sigdecode=ecdsa.util.sigdecode_der):
