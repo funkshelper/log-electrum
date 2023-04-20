@@ -1302,7 +1302,6 @@ class Abstract_Wallet(PrintError):
 
     def start_threads(self, network):
         self.network = network
-        print("network: ", network)
         if self.network is not None:
             self.verifier = SPV(self.network, self)
             self.synchronizer = Synchronizer(self, network)

@@ -752,7 +752,7 @@ class SocketPipe:
                 return response
             try:
                 data = self.socket.recv(1024)
-                # print("testing socket data: ", data)
+                print("testing socket data: ", self.socket.recv(1024))
             except socket.timeout:
                 raise timeout
             except ssl.SSLError:
@@ -779,10 +779,12 @@ class SocketPipe:
     def send(self, request):
         out = json.dumps(request) + '\n'
         out = out.encode('utf8')
+        # print("send out: ", out)
         self._send(out)
 
     def send_all(self, requests):
         out = b''.join(map(lambda x: (json.dumps(x) + '\n').encode('utf8'), requests))
+        # print("send all out: ", out)
         self._send(out)
 
     def _send(self, out):
