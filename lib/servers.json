@@ -1,13 +1,7 @@
 {
-    "207.154.223.80": {
+    "electrum.logbin.org": {
         "pruning": "-",
         "s": "50002",
-        "t": "50001",
-        "version": "1.2"
-    },
-    "4cii7ryno5j3axe4.onion": {
-        "pruning": "-",
-        "t": "50001",
         "version": "1.2"
     }
 }

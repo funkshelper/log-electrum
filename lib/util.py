@@ -752,7 +752,7 @@ class SocketPipe:
                 return response
             try:
                 data = self.socket.recv(1024)
-                print("testing socket data: ", self.socket.recv(1024))
+                # print("testing socket data: ", self.socket.recv(1024))
             except socket.timeout:
                 raise timeout
             except ssl.SSLError:
