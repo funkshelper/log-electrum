@@ -51,7 +51,7 @@ class SPV(ThreadJob):
                 if header is None:
                     index = tx_height // 2016
                     if index < len(blockchain.checkpoints):
-                        self.network.request_chunk(interface, index)
+                        self.network.request_chunk(interface, index, 0)
                 else:
                     if tx_hash not in self.merkle_roots:
                         request = ('blockchain.transaction.get_merkle',

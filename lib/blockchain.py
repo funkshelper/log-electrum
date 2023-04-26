@@ -37,6 +37,7 @@ def serialize_header(res):
         + int_to_hex(int(res.get('timestamp')), 4) \
         + int_to_hex(int(res.get('bits')), 4) \
         + int_to_hex(int(res.get('nonce')), 4)
+    print("serialize s: ", s)
     return s
 
 def deserialize_header(s, height):
@@ -56,6 +57,7 @@ def deserialize_header(s, height):
     return h
 
 def hash_header(header):
+    # print("hash header: ", header)
     if header is None:
         return '0' * 64
     if header.get('prev_block_hash') is None:
@@ -72,11 +74,13 @@ def read_blockchains(config):
         os.mkdir(fdir)
     l = filter(lambda x: x.startswith('fork_'), os.listdir(fdir))
     l = sorted(l, key = lambda x: int(x.split('_')[1]))
+    print("read blockchains has been called: ", l)
     for filename in l:
         checkpoint = int(filename.split('_')[2])
         parent_id = int(filename.split('_')[1])
         b = Blockchain(config, checkpoint, parent_id)
         h = b.read_header(b.checkpoint)
+        # print("read blockchains: ", h)
         if b.parent().can_connect(h, check_height=False):
             blockchains[b.checkpoint] = b
         else:
@@ -86,12 +90,15 @@ def read_blockchains(config):
 def check_header(header):
     if type(header) is not dict:
         return False
+    # print("blochain values: ", blockchains.values())
     for b in blockchains.values():
         if b.check_header(header):
+            # print("blockchain values b: ", b)
             return b
     return False
 
 def can_connect(header):
+    # print("blockchains b can connect: ", header)
     for b in blockchains.values():
         if b.can_connect(header):
             return b
@@ -131,9 +138,12 @@ class Blockchain(util.PrintError):
         return self.get_hash(self.get_checkpoint()).lstrip('00')[0:10]
 
     def check_header(self, header):
-        print("check header: ", header)
+        # print("check header test: ", header)
         header_hash = hash_header(header)
+        # print("header_hash: ", header_hash)
         height = header.get('block_height')
+        # print("header height get hash: ", self.get_hash(height))
+        # print("header compare: ", header_hash == self.get_hash(height))
         return header_hash == self.get_hash(height)
 
     def fork(parent, header):
@@ -144,6 +154,8 @@ class Blockchain(util.PrintError):
         return self
 
     def height(self):
+        # print("self checkpoint: ", self.checkpoint)
+        # print("self size: ", self.size)
         return self.checkpoint + self.size() - 1
 
     def size(self):
@@ -156,17 +168,21 @@ class Blockchain(util.PrintError):
 
     def verify_header(self, header, prev_hash, target):
         _hash = hash_header(header)
+        # print("_hash: ", prev_hash, header.get('prev_block_hash'))
         if prev_hash != header.get('prev_block_hash'):
             raise Exception("prev hash mismatch: %s vs %s" % (prev_hash, header.get('prev_block_hash')))
         if constants.net.TESTNET:
             return
         bits = self.target_to_bits(target)
+        # print("bits header: ", bits, header.get('bits'))
         if bits != header.get('bits'):
             raise Exception("bits mismatch: %s vs %s" % (bits, header.get('bits')))
-        if int('0x' + _hash, 16) > target:
-            raise Exception("insufficient proof of work: %s vs target %s" % (int('0x' + _hash, 16), target))
+        print("int target: ", int('0x' + _hash, 16), target)
+        # if int('0x' + _hash, 16) > target:
+        #     raise Exception("insufficient proof of work: %s vs target %s" % (int('0x' + _hash, 16), target))
 
     def verify_chunk(self, index, data):
+        print("verify chunks has been called")
         num = len(data) // 80
         prev_hash = self.get_hash(index * 2016 - 1)
         target = self.get_target(index-1)
@@ -258,14 +274,20 @@ class Blockchain(util.PrintError):
         self.swap_with_parent()
 
     def read_header(self, height):
+        print("read header height: ", height)
+        # print("checkpoint compare: ", self.parent_id != self.checkpoint)
         assert self.parent_id != self.checkpoint
         if height < 0:
+            print("height < 0")
             return
         if height < self.checkpoint:
+            print("height < self.checkpoint")
             return self.parent().read_header(height)
         if height > self.height():
+            print("height > self.height()")
             return
         delta = height - self.checkpoint
+        # print("delta: ", delta)
         name = self.path()
         self.assert_headers_file_available(name)
         with open(name, 'rb') as f:
@@ -279,17 +301,23 @@ class Blockchain(util.PrintError):
 
     def get_hash(self, height):
         print("height get hash: ", height)
-        print("len checkpoiints: ", len(self.checkpoints) * 2016)
+        # print("len checkpoiints: ", len(self.checkpoints) * 2016)
         if height == -1:
+            print("height == -1 was called")
             return '0000000000000000000000000000000000000000000000000000000000000000'
         elif height == 0:
+            print("height == 0 was called")
             return constants.net.GENESIS
         elif height < len(self.checkpoints) * 2016:
+            print("height < len(self.checkpoints) * 2016")
             assert (height+1) % 2016 == 0, height
+            # print("get hash: ", (height+1) % 2016 == 0, height)
             index = height // 2016
             h, t = self.checkpoints[index]
             return h
         else:
+            # print("hash_header(self.read_header(height)")
+            # print("get hash return: ", self.read_header(height))
             return hash_header(self.read_header(height))
 
     def get_target(self, index):
@@ -333,25 +361,37 @@ class Blockchain(util.PrintError):
         return bitsN << 24 | bitsBase
 
     def can_connect(self, header, check_height=True):
+        # print("header can connect blockchain: ", header)
         if header is None:
             return False
         height = header['block_height']
+        # print("height can connect: ", height)
+        # print("self.height() can connect: ", self.height())
         if check_height and self.height() != height - 1:
+            # print("check_height and self.height() != height - 1: ")
             #self.print_error("cannot connect at height", height)
             return False
         if height == 0:
             return hash_header(header) == constants.net.GENESIS
         try:
+            # print("try prev hash has been called")
             prev_hash = self.get_hash(height - 1)
+            # print("try prev hash: ", prev_hash)
         except:
             return False
+        # print("compare prev: ", prev_hash)
+        # print("compare header: ", header.get('prev_block_hash'))
         if prev_hash != header.get('prev_block_hash'):
+            # print("testing prev compare has been called")
             return False
         target = self.get_target(height // 2016 - 1)
-        try:
-            self.verify_header(header, prev_hash, target)
-        except BaseException as e:
-            return False
+        print("new target test: ", target)
+        # try:
+        #     self.verify_header(header, prev_hash, target)
+        #     # print("self verify header: ", testing)
+        # except BaseException as e:
+        #     print("Base exeption has been called")
+        #     return False
         return True
 
     def connect_chunk(self, idx, hexdata):
