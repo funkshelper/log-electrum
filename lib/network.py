@@ -570,8 +570,10 @@ class Network(util.DaemonThread):
                 self.print_error("relayfee", self.relay_fee)
         elif method == 'blockchain.block.headers':
             self.on_get_chunk(interface, response)
+            print("blockchain header chunks: ", response)
         elif method == 'blockchain.block.header':
             head = response.get('result')
+            # print("header method: ", head)
             block_head = blockchain.deserialize_header(bfh(head['result']), head['height'])
             self.on_get_header(interface, block_head)
 
@@ -769,7 +771,8 @@ class Network(util.DaemonThread):
             if self.config.is_fee_estimates_update_required():
                 self.request_fee_estimates()
 
-    def request_chunk(self, interface, index):
+    def request_chunk(self, interface, index, cp_height):
+        print("request chunk interface: ", interface.tip)
         if index in self.requested_chunks:
             return
         interface.print_error("requesting chunk %d" % index)
@@ -786,6 +789,7 @@ class Network(util.DaemonThread):
             interface.print_error(error or 'bad response')
             return
         index = params[0]
+        # print("on get chunk index: ", index)
         # Ignore unsolicited chunks
         if index not in self.requested_chunks:
             interface.print_error("received chunk %d (unsolicited)" % index)
@@ -799,7 +803,7 @@ class Network(util.DaemonThread):
             return
         # If not finished, get the next chunk
         if index >= len(blockchain.checkpoints) and blockchain.height() < interface.tip:
-            self.request_chunk(interface, index+1)
+            self.request_chunk(interface, index+1, 0)
         else:
             interface.mode = 'default'
             interface.print_error('catch up done', blockchain.height())
@@ -808,6 +812,7 @@ class Network(util.DaemonThread):
 
     def request_header(self, interface, height):
         #interface.print_error("requesting header %d" % height)
+        print("request header height: ", height)
         self.queue_request('blockchain.block.header', [height], interface)
         interface.request = height
         interface.req_time = time.time()
@@ -820,15 +825,19 @@ class Network(util.DaemonThread):
             interface.print_error(response)
             self.connection_down(interface.server)
             return
-        height = header['block_height']
+        height = header.get('block_height')
         if interface.request != height:
             interface.print_error("unsolicited header",interface.request, height)
             self.connection_down(interface.server)
             return
         chain = blockchain.check_header(header)
+        print("interface mode ", interface.mode)
+        # print("chain mode: ", chain)
         if interface.mode == 'backward':
             can_connect = blockchain.can_connect(header)
+            print("can connect block chechk: ", can_connect)
             if can_connect and can_connect.catch_up is None:
+                print("can connect catch up has been called")
                 interface.mode = 'catch_up'
                 interface.blockchain = can_connect
                 interface.blockchain.save_header(header)
@@ -841,6 +850,7 @@ class Network(util.DaemonThread):
                 interface.good = height
                 next_height = (interface.bad + interface.good) // 2
                 assert next_height >= self.max_checkpoint(), (interface.bad, interface.good)
+                # print("chain next height: ", self.max_checkpoint())
             else:
                 if height == 0:
                     self.connection_down(interface.server)
@@ -850,6 +860,7 @@ class Network(util.DaemonThread):
                     interface.bad_header = header
                     delta = interface.tip - height
                     next_height = max(self.max_checkpoint(), interface.tip - 2 * delta)
+                    print("next height else", next_height)
 
         elif interface.mode == 'binary':
             if chain:
@@ -906,9 +917,11 @@ class Network(util.DaemonThread):
 
         elif interface.mode == 'catch_up':
             can_connect = interface.blockchain.can_connect(header)
+            # print("can connect interface: ", can_connect)
             if can_connect:
                 interface.blockchain.save_header(header)
                 next_height = height + 1 if height < interface.tip else None
+                # print("can connect next_height: ", next_height)
             else:
                 # go back
                 interface.print_error("cannot connect", height)
@@ -916,6 +929,7 @@ class Network(util.DaemonThread):
                 interface.bad = height
                 interface.bad_header = header
                 next_height = height - 1
+                # print("can connect next_height else: ", next_height)
 
             if next_height is None:
                 # exit catch_up state
@@ -929,9 +943,11 @@ class Network(util.DaemonThread):
         # If not finished, get the next header
         if next_height:
             if interface.mode == 'catch_up' and interface.tip > next_height + 50:
-                self.request_chunk(interface, next_height // 2016)
+                print("Chunk has been called", next_height)
+                self.request_chunk(interface, next_height // 2016, 0)
             else:
                 self.request_header(interface, next_height)
+                # print("req next height has been called", next_height)
         else:
             interface.mode = 'default'
             interface.request = None
@@ -974,8 +990,9 @@ class Network(util.DaemonThread):
         filename = b.path()
         # print("filename: ", filename)
         length = 80 * len(constants.net.CHECKPOINTS) * 2016
-        # print("length: ", length)
+        print("length: ", length)
         # print("filename size: ", os.path.getsize(filename))
+        print("filename exists: ", os.path.exists(filename))
         if not os.path.exists(filename) or os.path.getsize(filename) < length:
             with open(filename, 'wb') as f:
                 if length>0:
@@ -997,10 +1014,12 @@ class Network(util.DaemonThread):
 
     def on_notify_header(self, interface, header):
         height = header.get('block_height')
-        print("on notify header height: ", header)
+        # print("on notify header: ", header)
+        # print("on notify header height: ", height)
         if not height:
             return
         if height < self.max_checkpoint():
+            print("connection shotdown has been called")
             self.connection_down(interface.server)
             return
         interface.tip_header = header
@@ -1008,6 +1027,8 @@ class Network(util.DaemonThread):
         if interface.mode != 'default':
             return
         b = blockchain.check_header(header)
+        # print("head: ", header)
+        print("notify b: ", b)
         if b:
             interface.blockchain = b
             self.switch_lagging_interface()
@@ -1015,6 +1036,7 @@ class Network(util.DaemonThread):
             self.notify('interfaces')
             return
         b = blockchain.can_connect(header)
+        # print("b can connect: ", b)
         if b:
             interface.blockchain = b
             b.save_header(header)
@@ -1023,6 +1045,7 @@ class Network(util.DaemonThread):
             self.notify('interfaces')
             return
         tip = max([x.height() for x in self.blockchains.values()])
+        print("interface tip: ", tip)
         if tip >=0:
             interface.mode = 'backward'
             interface.bad = height
