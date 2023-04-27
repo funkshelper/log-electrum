@@ -348,9 +348,11 @@ class Network(util.DaemonThread):
         return value
 
     def notify(self, key):
+        # print("notify has been called: ", key)
         if key in ['status', 'updated']:
             self.trigger_callback(key)
         else:
+            # print("else notify has been called: ", key)
             self.trigger_callback(key, self.get_status_value(key))
 
     def get_parameters(self):
@@ -573,7 +575,7 @@ class Network(util.DaemonThread):
             print("blockchain header chunks: ", response)
         elif method == 'blockchain.block.header':
             head = response.get('result')
-            # print("header method: ", head)
+            print("header method: ", head)
             block_head = blockchain.deserialize_header(bfh(head['result']), head['height'])
             self.on_get_header(interface, block_head)
 
@@ -772,12 +774,12 @@ class Network(util.DaemonThread):
                 self.request_fee_estimates()
 
     def request_chunk(self, interface, index, cp_height):
-        print("request chunk interface: ", interface.tip)
+        # print("request chunk interface: ", interface.tip)
         if index in self.requested_chunks:
             return
         interface.print_error("requesting chunk %d" % index)
         self.requested_chunks.add(index)
-        self.queue_request('blockchain.block.headers', [index], interface)
+        self.queue_request('blockchain.block.headers', [index, 2016], interface)
 
     def on_get_chunk(self, interface, response):
         '''Handle receiving a chunk of block headers'''
@@ -789,6 +791,7 @@ class Network(util.DaemonThread):
             interface.print_error(error or 'bad response')
             return
         index = params[0]
+        print("requested chunk: ", params)
         # print("on get chunk index: ", index)
         # Ignore unsolicited chunks
         if index not in self.requested_chunks:
@@ -797,12 +800,13 @@ class Network(util.DaemonThread):
         else:
             interface.print_error("received chunk %d" % index)
         self.requested_chunks.remove(index)
-        connect = blockchain.connect_chunk(index, result)
+        connect = blockchain.connect_chunk(index, result.get("hex"))
         if not connect:
             self.connection_down(interface.server)
             return
         # If not finished, get the next chunk
         if index >= len(blockchain.checkpoints) and blockchain.height() < interface.tip:
+            print("on get chunk: ", index)
             self.request_chunk(interface, index+1, 0)
         else:
             interface.mode = 'default'
@@ -943,7 +947,7 @@ class Network(util.DaemonThread):
         # If not finished, get the next header
         if next_height:
             if interface.mode == 'catch_up' and interface.tip > next_height + 50:
-                print("Chunk has been called", next_height)
+                # print("Chunk has been called", next_height)
                 self.request_chunk(interface, next_height // 2016, 0)
             else:
                 self.request_header(interface, next_height)
@@ -1027,7 +1031,7 @@ class Network(util.DaemonThread):
         if interface.mode != 'default':
             return
         b = blockchain.check_header(header)
-        # print("head: ", header)
+        print("head: ", header)
         print("notify b: ", b)
         if b:
             interface.blockchain = b
@@ -1036,7 +1040,7 @@ class Network(util.DaemonThread):
             self.notify('interfaces')
             return
         b = blockchain.can_connect(header)
-        # print("b can connect: ", b)
+        print("b can connect: ", b)
         if b:
             interface.blockchain = b
             b.save_header(header)

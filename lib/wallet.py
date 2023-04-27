@@ -439,6 +439,8 @@ class Abstract_Wallet(PrintError):
         return [self.get_public_key(address)]
 
     def add_unverified_tx(self, tx_hash, tx_height):
+        # print("add unverified tx: ", tx_height in (TX_HEIGHT_UNCONFIRMED, TX_HEIGHT_UNCONF_PARENT))
+        # print("and add unverified tx: ", tx_hash in self.verified_tx)
         if tx_height in (TX_HEIGHT_UNCONFIRMED, TX_HEIGHT_UNCONF_PARENT) \
                 and tx_hash in self.verified_tx:
             self.verified_tx.pop(tx_hash)
@@ -447,6 +449,7 @@ class Abstract_Wallet(PrintError):
 
         # tx will be verified only if height > 0
         if tx_hash not in self.verified_tx:
+            # print("tx_hash not in self.verified_tx")
             self.unverified_tx[tx_hash] = tx_height
 
     def add_verified_tx(self, tx_hash, info):
@@ -951,6 +954,7 @@ class Abstract_Wallet(PrintError):
             self.txo.pop(tx_hash, None)
 
     def receive_tx_callback(self, tx_hash, tx, tx_height):
+        print("receive tx call back has been called")
         self.add_unverified_tx(tx_hash, tx_height)
         self.add_transaction(tx_hash, tx)
 
@@ -971,6 +975,7 @@ class Abstract_Wallet(PrintError):
             self.history[addr] = hist
 
         for tx_hash, tx_height in hist:
+            print("tx_hash, tx_height in hist")
             # add it in case it was previously unconfirmed
             self.add_unverified_tx(tx_hash, tx_height)
             # if addr is new, we have to recompute txi and txo
@@ -1295,7 +1300,9 @@ class Abstract_Wallet(PrintError):
 
     def load_unverified_transactions(self):
         # review transactions that are in the history
+        # print("load_unverified_transactions: ", self.history.items())
         for addr, hist in self.history.items():
+            # print("addr, hist in self.history.items(): ", hist)
             for tx_hash, tx_height in hist:
                 # add it in case it was previously unconfirmed
                 self.add_unverified_tx(tx_hash, tx_height)
