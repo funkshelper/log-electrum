@@ -43,13 +43,14 @@ class SPV(ThreadJob):
         if not blockchain:
             return
         lh = self.network.get_local_height()
-        # print("lh: ", lh)
+        print("lh: ", lh)
         unverified = self.wallet.get_unverified_txs()
         # print("unverified: ", unverified.items())
         for tx_hash, tx_height in unverified.items():
             # do not request merkle branch before headers are available
+            # print("tx_height > 0) and (tx_height <= lh ", tx_height, lh)
+            print("tx height: ", tx_height)
             if (tx_height > 0) and (tx_height <= lh):
-                # print("tx_height > 0) and (tx_height <= lh")
                 header = blockchain.read_header(tx_height)
                 # print("blockchain.read_header(tx_height): ", header)
                 if header is None:
@@ -66,6 +67,7 @@ class SPV(ThreadJob):
                         self.merkle_roots[tx_hash] = None
 
         if self.network.blockchain() != self.blockchain:
+            # print("self network blockchain has been called")
             self.blockchain = self.network.blockchain()
             self.undo_verifications()
 
@@ -85,6 +87,7 @@ class SPV(ThreadJob):
         pos = merkle.get('pos')
         merkle_root = self.hash_merkle_root(merkle['merkle'], tx_hash, pos)
         header = self.network.blockchain().read_header(tx_height)
+        print("", header)
         # FIXME: if verification fails below,
         # we should make a fresh connection to a server to
         # recover from this, as this TX will now never verify

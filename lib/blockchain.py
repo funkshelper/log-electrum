@@ -100,7 +100,9 @@ def check_header(header):
 def can_connect(header):
     # print("blockchains b can connect: ", header)
     for b in blockchains.values():
+        print("can connect b blockchain values", b)
         if b.can_connect(header):
+            print("can connect b return b")
             return b
     return False
 
@@ -144,8 +146,8 @@ class Blockchain(util.PrintError):
         height = header.get('block_height')
         # print("header height get hash: ", self.get_hash(height))
         # print("header compare: ", header_hash == self.get_hash(height))
-        # return header_hash == self.get_hash(height)
-        return True
+        return header_hash == self.get_hash(height)
+        # return True
 
     def fork(parent, header):
         checkpoint = header.get('block_height')
@@ -176,9 +178,9 @@ class Blockchain(util.PrintError):
             return
         bits = self.target_to_bits(target)
         # print("bits header: ", bits, header.get('bits'))
-        if bits != header.get('bits'):
-            raise Exception("bits mismatch: %s vs %s" % (bits, header.get('bits')))
-        print("int target: ", int('0x' + _hash, 16), target)
+        # if bits != header.get('bits'):
+        #     raise Exception("bits mismatch: %s vs %s" % (bits, header.get('bits')))
+        # print("int target: ", int('0x' + _hash, 16), target)
         # if int('0x' + _hash, 16) > target:
         #     raise Exception("insufficient proof of work: %s vs target %s" % (int('0x' + _hash, 16), target))
 
@@ -268,9 +270,10 @@ class Blockchain(util.PrintError):
             self.update_size()
 
     def save_header(self, header):
+        print("save header has been called")
         delta = header.get('block_height') - self.checkpoint
         data = bfh(serialize_header(header))
-        assert delta == self.size()
+        # assert delta == self.size()
         assert len(data) == 80
         self.write(data, delta*80)
         self.swap_with_parent()
@@ -388,12 +391,12 @@ class Blockchain(util.PrintError):
             return False
         target = self.get_target(height // 2016 - 1)
         print("new target test: ", target)
-        # try:
-        #     self.verify_header(header, prev_hash, target)
-        #     # print("self verify header: ", testing)
-        # except BaseException as e:
-        #     print("Base exeption has been called")
-        #     return False
+        try:
+            self.verify_header(header, prev_hash, target)
+            # print("self verify header: ", testing)
+        except BaseException as e:
+            print("Base exeption has been called")
+            return False
         return True
 
     def connect_chunk(self, idx, hexdata):

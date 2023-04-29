@@ -331,6 +331,7 @@ class Network(util.DaemonThread):
             self.queue_request('blockchain.estimatefee', [i])
 
     def get_status_value(self, key):
+        print("key: ", key)
         if key == 'status':
             value = self.connection_status
         elif key == 'banner':
@@ -572,10 +573,10 @@ class Network(util.DaemonThread):
                 self.print_error("relayfee", self.relay_fee)
         elif method == 'blockchain.block.headers':
             self.on_get_chunk(interface, response)
-            print("blockchain header chunks: ", response)
+            # print("blockchain header chunks: ", response)
         elif method == 'blockchain.block.header':
             head = response.get('result')
-            print("header method: ", head)
+            # print("header method: ", head)
             block_head = blockchain.deserialize_header(bfh(head['result']), head['height'])
             self.on_get_header(interface, block_head)
 
@@ -806,7 +807,7 @@ class Network(util.DaemonThread):
             return
         # If not finished, get the next chunk
         if index >= len(blockchain.checkpoints) and blockchain.height() < interface.tip:
-            print("on get chunk: ", index)
+            # print("on get chunk: ", index)
             self.request_chunk(interface, index+1, 0)
         else:
             interface.mode = 'default'
@@ -1031,7 +1032,7 @@ class Network(util.DaemonThread):
         if interface.mode != 'default':
             return
         b = blockchain.check_header(header)
-        print("head: ", header)
+        # print("head: ", header)
         print("notify b: ", b)
         if b:
             interface.blockchain = b
