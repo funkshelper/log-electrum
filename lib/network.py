@@ -331,7 +331,7 @@ class Network(util.DaemonThread):
             self.queue_request('blockchain.estimatefee', [i])
 
     def get_status_value(self, key):
-        print("key: ", key)
+        # print("key: ", key)
         if key == 'status':
             value = self.connection_status
         elif key == 'banner':
@@ -574,10 +574,12 @@ class Network(util.DaemonThread):
         elif method == 'blockchain.block.headers':
             self.on_get_chunk(interface, response)
             # print("blockchain header chunks: ", response)
+            # print("interface: ", interface)
         elif method == 'blockchain.block.header':
             head = response.get('result')
             # print("header method: ", head)
             block_head = blockchain.deserialize_header(bfh(head['result']), head['height'])
+            # print("block head: ", block_head)
             self.on_get_header(interface, block_head)
 
         for callback in callbacks:
@@ -775,12 +777,16 @@ class Network(util.DaemonThread):
                 self.request_fee_estimates()
 
     def request_chunk(self, interface, index, cp_height):
-        # print("request chunk interface: ", interface.tip)
         if index in self.requested_chunks:
             return
+        count = index * 2016
+        size = interface.tip - count
+        # if tip is not None:
+        #     size = min(size, tip - index * 2016 + 1)
+        #     size = max(size, 0)
         interface.print_error("requesting chunk %d" % index)
         self.requested_chunks.add(index)
-        self.queue_request('blockchain.block.headers', [index, 2016], interface)
+        self.queue_request('blockchain.block.headers', [index * 2016, count, 0])
 
     def on_get_chunk(self, interface, response):
         '''Handle receiving a chunk of block headers'''
@@ -792,8 +798,8 @@ class Network(util.DaemonThread):
             interface.print_error(error or 'bad response')
             return
         index = params[0]
-        print("requested chunk: ", params)
-        # print("on get chunk index: ", index)
+        # print("requested chunk: ", index)
+        # print("on get chunk index: ", self.requested_chunks)
         # Ignore unsolicited chunks
         if index not in self.requested_chunks:
             interface.print_error("received chunk %d (unsolicited)" % index)
@@ -808,7 +814,7 @@ class Network(util.DaemonThread):
         # If not finished, get the next chunk
         if index >= len(blockchain.checkpoints) and blockchain.height() < interface.tip:
             # print("on get chunk: ", index)
-            self.request_chunk(interface, index+1, 0)
+            self.request_chunk(interface, 2016, 0)
         else:
             interface.mode = 'default'
             interface.print_error('catch up done', blockchain.height())
@@ -817,14 +823,14 @@ class Network(util.DaemonThread):
 
     def request_header(self, interface, height):
         #interface.print_error("requesting header %d" % height)
-        print("request header height: ", height)
+        # print("request header height: ", height)
         self.queue_request('blockchain.block.header', [height], interface)
         interface.request = height
         interface.req_time = time.time()
 
     def on_get_header(self, interface, response):
         '''Handle receiving a single block header'''
-        print("on get header: ", response)
+        # print("on get header: ", response)
         header = response
         if not header:
             interface.print_error(response)
@@ -836,11 +842,11 @@ class Network(util.DaemonThread):
             self.connection_down(interface.server)
             return
         chain = blockchain.check_header(header)
-        print("interface mode ", interface.mode)
+        # print("interface mode ", interface.mode)
         # print("chain mode: ", chain)
         if interface.mode == 'backward':
             can_connect = blockchain.can_connect(header)
-            print("can connect block chechk: ", can_connect)
+            print("can connect block chechk: ", can_connect and can_connect.catch_up is None)
             if can_connect and can_connect.catch_up is None:
                 print("can connect catch up has been called")
                 interface.mode = 'catch_up'
