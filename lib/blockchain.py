@@ -54,6 +54,7 @@ def deserialize_header(s, height):
     h['bits'] = hex_to_int(s[72:76])
     h['nonce'] = hex_to_int(s[76:80])
     h['block_height'] = height
+    # print("deserialize: ", h)
     return h
 
 def hash_header(header):
@@ -178,20 +179,24 @@ class Blockchain(util.PrintError):
             return
         bits = self.target_to_bits(target)
         # print("bits header: ", bits, header.get('bits'))
-        # if bits != header.get('bits'):
-        #     raise Exception("bits mismatch: %s vs %s" % (bits, header.get('bits')))
+        if bits != header.get('bits'):
+            raise Exception("bits mismatch: %s vs %s" % (bits, header.get('bits')))
         # print("int target: ", int('0x' + _hash, 16), target)
         # if int('0x' + _hash, 16) > target:
         #     raise Exception("insufficient proof of work: %s vs target %s" % (int('0x' + _hash, 16), target))
 
     def verify_chunk(self, index, data):
-        print("verify chunks has been called")
+        # print("verify chunks has been called", index)
         num = len(data) // 80
         prev_hash = self.get_hash(index * 2016 - 1)
         target = self.get_target(index-1)
         for i in range(num):
+            # print("I: ", i)
+            print("num: ", index*2016 + i)
             raw_header = data[i*80:(i+1) * 80]
+            # print("raw header: ", raw_header)
             header = deserialize_header(raw_header, index*2016 + i)
+            print("verify chunk header: ", header)
             self.verify_header(header, prev_hash, target)
             prev_hash = hash_header(header)
 
@@ -390,7 +395,7 @@ class Blockchain(util.PrintError):
             # print("testing prev compare has been called")
             return False
         target = self.get_target(height // 2016 - 1)
-        print("new target test: ", target)
+        # print("new target test: ", target)
         try:
             self.verify_header(header, prev_hash, target)
             # print("self verify header: ", testing)
@@ -403,8 +408,8 @@ class Blockchain(util.PrintError):
         # return True
         try:
             data = bfh(hexdata)
-            # self.verify_chunk(idx, data)
-            #self.print_error("validated chunk %d" % idx)
+            self.verify_chunk(idx, data)
+            # self.print_error("validated chunk %d" % idx)
             self.save_chunk(idx, data)
             return True
         except BaseException as e:
