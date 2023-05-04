@@ -2,7 +2,7 @@
 # sudo desktop-file-install electrum.desktop
 
 [Desktop Entry]
-Comment=Lightweight Bitcoin Client
+Comment=Lightweight Woodcoin Client
 Exec=sh -c "PATH=\"\\$HOME/.local/bin:\\$PATH\" electrum %u"
 GenericName[en_US]=Bitcoin Wallet
 GenericName=Bitcoin Wallet
