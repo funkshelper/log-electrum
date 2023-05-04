@@ -781,12 +781,13 @@ class Network(util.DaemonThread):
             return
         count = index * 2016
         size = interface.tip - count
+        print("interface tip: ", interface.tip)
         # if tip is not None:
         #     size = min(size, tip - index * 2016 + 1)
         #     size = max(size, 0)
         interface.print_error("requesting chunk %d" % index)
         self.requested_chunks.add(index)
-        self.queue_request('blockchain.block.headers', [index * 2016, count, 0])
+        self.queue_request('blockchain.block.headers', [index * 2016, size, 0])
 
     def on_get_chunk(self, interface, response):
         '''Handle receiving a chunk of block headers'''
@@ -797,9 +798,11 @@ class Network(util.DaemonThread):
         if result is None or params is None or error is not None:
             interface.print_error(error or 'bad response')
             return
-        index = params[0]
-        # print("requested chunk: ", index)
+        index = params[0] // 2016
+        index1 = params[0]
+        # print("requested chunk: ", params)
         # print("on get chunk index: ", self.requested_chunks)
+        # print("result on get chunk: ", result)
         # Ignore unsolicited chunks
         if index not in self.requested_chunks:
             interface.print_error("received chunk %d (unsolicited)" % index)
@@ -812,9 +815,9 @@ class Network(util.DaemonThread):
             self.connection_down(interface.server)
             return
         # If not finished, get the next chunk
-        if index >= len(blockchain.checkpoints) and blockchain.height() < interface.tip:
-            # print("on get chunk: ", index)
-            self.request_chunk(interface, 2016, 0)
+        if index1 >= len(blockchain.checkpoints) and blockchain.height() < interface.tip:
+            print("on get chunk: ", index)
+            self.request_chunk(interface, index + 1, 0)
         else:
             interface.mode = 'default'
             interface.print_error('catch up done', blockchain.height())
@@ -954,7 +957,7 @@ class Network(util.DaemonThread):
         # If not finished, get the next header
         if next_height:
             if interface.mode == 'catch_up' and interface.tip > next_height + 50:
-                # print("Chunk has been called", next_height)
+                print("Chunk has been called", next_height)
                 self.request_chunk(interface, next_height // 2016, 0)
             else:
                 self.request_header(interface, next_height)
