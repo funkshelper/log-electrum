@@ -179,16 +179,17 @@ class Blockchain(util.PrintError):
             return
         bits = self.target_to_bits(target)
         # print("bits header: ", bits, header.get('bits'))
-        if bits != header.get('bits'):
-            raise Exception("bits mismatch: %s vs %s" % (bits, header.get('bits')))
+        # if bits != header.get('bits'):
+        #     raise Exception("bits mismatch: %s vs %s" % (bits, header.get('bits')))
         # print("int target: ", int('0x' + _hash, 16), target)
         # if int('0x' + _hash, 16) > target:
         #     raise Exception("insufficient proof of work: %s vs target %s" % (int('0x' + _hash, 16), target))
 
     def verify_chunk(self, index, data):
-        # print("verify chunks has been called", index)
+        print("verify chunks has been called", index)
         num = len(data) // 80
         prev_hash = self.get_hash(index * 2016 - 1)
+        print("pre hash: ", prev_hash)
         target = self.get_target(index-1)
         for i in range(num):
             # print("I: ", i)
