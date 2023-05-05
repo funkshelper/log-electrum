@@ -781,7 +781,7 @@ class Network(util.DaemonThread):
             return
         count = index * 2016
         size = interface.tip - count
-        print("interface tip: ", interface.tip)
+        # print("interface tip: ", interface.tip)
         # if tip is not None:
         #     size = min(size, tip - index * 2016 + 1)
         #     size = max(size, 0)
@@ -816,7 +816,7 @@ class Network(util.DaemonThread):
             return
         # If not finished, get the next chunk
         if index1 >= len(blockchain.checkpoints) and blockchain.height() < interface.tip:
-            print("on get chunk: ", index)
+            # print("on get chunk: ", index)
             self.request_chunk(interface, index + 1, 0)
         else:
             interface.mode = 'default'
@@ -849,9 +849,9 @@ class Network(util.DaemonThread):
         # print("chain mode: ", chain)
         if interface.mode == 'backward':
             can_connect = blockchain.can_connect(header)
-            print("can connect block chechk: ", can_connect and can_connect.catch_up is None)
+            # print("can connect block chechk: ", can_connect and can_connect.catch_up is None)
             if can_connect and can_connect.catch_up is None:
-                print("can connect catch up has been called")
+                # print("can connect catch up has been called")
                 interface.mode = 'catch_up'
                 interface.blockchain = can_connect
                 interface.blockchain.save_header(header)
@@ -874,7 +874,7 @@ class Network(util.DaemonThread):
                     interface.bad_header = header
                     delta = interface.tip - height
                     next_height = max(self.max_checkpoint(), interface.tip - 2 * delta)
-                    print("next height else", next_height)
+                    # print("next height else", next_height)
 
         elif interface.mode == 'binary':
             if chain:
@@ -957,7 +957,7 @@ class Network(util.DaemonThread):
         # If not finished, get the next header
         if next_height:
             if interface.mode == 'catch_up' and interface.tip > next_height + 50:
-                print("Chunk has been called", next_height)
+                # print("Chunk has been called", next_height)
                 self.request_chunk(interface, next_height // 2016, 0)
             else:
                 self.request_header(interface, next_height)
@@ -1004,9 +1004,9 @@ class Network(util.DaemonThread):
         filename = b.path()
         # print("filename: ", filename)
         length = 80 * len(constants.net.CHECKPOINTS) * 2016
-        print("length: ", length)
+        # print("length: ", length)
         # print("filename size: ", os.path.getsize(filename))
-        print("filename exists: ", os.path.exists(filename))
+        # print("filename exists: ", os.path.exists(filename))
         if not os.path.exists(filename) or os.path.getsize(filename) < length:
             with open(filename, 'wb') as f:
                 if length>0:
@@ -1033,7 +1033,7 @@ class Network(util.DaemonThread):
         if not height:
             return
         if height < self.max_checkpoint():
-            print("connection shotdown has been called")
+            # print("connection shotdown has been called")
             self.connection_down(interface.server)
             return
         interface.tip_header = header
@@ -1042,7 +1042,7 @@ class Network(util.DaemonThread):
             return
         b = blockchain.check_header(header)
         # print("head: ", header)
-        print("notify b: ", b)
+        # print("notify b: ", b)
         if b:
             interface.blockchain = b
             self.switch_lagging_interface()
@@ -1050,7 +1050,7 @@ class Network(util.DaemonThread):
             self.notify('interfaces')
             return
         b = blockchain.can_connect(header)
-        print("b can connect: ", b)
+        # print("b can connect: ", b)
         if b:
             interface.blockchain = b
             b.save_header(header)
@@ -1059,7 +1059,7 @@ class Network(util.DaemonThread):
             self.notify('interfaces')
             return
         tip = max([x.height() for x in self.blockchains.values()])
-        print("interface tip: ", tip)
+        # print("interface tip: ", tip)
         if tip >=0:
             interface.mode = 'backward'
             interface.bad = height

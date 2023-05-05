@@ -954,7 +954,7 @@ class Abstract_Wallet(PrintError):
             self.txo.pop(tx_hash, None)
 
     def receive_tx_callback(self, tx_hash, tx, tx_height):
-        print("receive tx call back has been called")
+        # print("receive tx call back has been called")
         self.add_unverified_tx(tx_hash, tx_height)
         self.add_transaction(tx_hash, tx)
 
@@ -975,7 +975,7 @@ class Abstract_Wallet(PrintError):
             self.history[addr] = hist
 
         for tx_hash, tx_height in hist:
-            print("tx_hash, tx_height in hist")
+            # print("tx_hash, tx_height in hist")
             # add it in case it was previously unconfirmed
             self.add_unverified_tx(tx_hash, tx_height)
             # if addr is new, we have to recompute txi and txo

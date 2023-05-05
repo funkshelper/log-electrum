@@ -75,7 +75,7 @@ def read_blockchains(config):
         os.mkdir(fdir)
     l = filter(lambda x: x.startswith('fork_'), os.listdir(fdir))
     l = sorted(l, key = lambda x: int(x.split('_')[1]))
-    print("read blockchains has been called: ", l)
+    # print("read blockchains has been called: ", l)
     for filename in l:
         checkpoint = int(filename.split('_')[2])
         parent_id = int(filename.split('_')[1])
@@ -101,9 +101,9 @@ def check_header(header):
 def can_connect(header):
     # print("blockchains b can connect: ", header)
     for b in blockchains.values():
-        print("can connect b blockchain values", b)
+        # print("can connect b blockchain values", b)
         if b.can_connect(header):
-            print("can connect b return b")
+            # print("can connect b return b")
             return b
     return False
 
@@ -186,18 +186,18 @@ class Blockchain(util.PrintError):
         #     raise Exception("insufficient proof of work: %s vs target %s" % (int('0x' + _hash, 16), target))
 
     def verify_chunk(self, index, data):
-        print("verify chunks has been called", index)
+        # print("verify chunks has been called", index)
         num = len(data) // 80
         prev_hash = self.get_hash(index * 2016 - 1)
-        print("pre hash: ", prev_hash)
+        # print("pre hash: ", prev_hash)
         target = self.get_target(index-1)
         for i in range(num):
             # print("I: ", i)
-            print("num: ", index*2016 + i)
+            # print("num: ", index*2016 + i)
             raw_header = data[i*80:(i+1) * 80]
             # print("raw header: ", raw_header)
             header = deserialize_header(raw_header, index*2016 + i)
-            print("verify chunk header: ", header)
+            # print("verify chunk header: ", header)
             self.verify_header(header, prev_hash, target)
             prev_hash = hash_header(header)
 
@@ -207,7 +207,7 @@ class Blockchain(util.PrintError):
         return os.path.join(d, filename)
 
     def save_chunk(self, index, chunk):
-        print("save chunk has been called")
+        # print("save chunk has been called")
         filename = self.path()
         d = (index * 2016 - self.checkpoint) * 80
         if d < 0:
@@ -276,7 +276,7 @@ class Blockchain(util.PrintError):
             self.update_size()
 
     def save_header(self, header):
-        print("save header has been called")
+        # print("save header has been called")
         delta = header.get('block_height') - self.checkpoint
         data = bfh(serialize_header(header))
         # assert delta == self.size()
@@ -314,7 +314,7 @@ class Blockchain(util.PrintError):
         # print("height get hash: ", height)
         # print("len checkpoiints: ", len(self.checkpoints) * 2016)
         if height == -1:
-            print("height == -1 was called")
+            # print("height == -1 was called")
             return '0000000000000000000000000000000000000000000000000000000000000000'
         elif height == 0:
             # print("height == 0 was called")
@@ -401,7 +401,7 @@ class Blockchain(util.PrintError):
             self.verify_header(header, prev_hash, target)
             # print("self verify header: ", testing)
         except BaseException as e:
-            print("Base exeption has been called")
+            # print("Base exeption has been called")
             return False
         return True
 

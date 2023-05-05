@@ -41,7 +41,7 @@ if platform.system() in ['Linux', 'FreeBSD', 'DragonFly']:
     ]
 
 setup(
-    name="Electrum",
+    name="Loglectrum",
     version=version.ELECTRUM_VERSION,
     install_requires=requirements,
     extras_require={
